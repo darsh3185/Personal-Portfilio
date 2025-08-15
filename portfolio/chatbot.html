@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Neon VFX Chatbot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Animated Gradient Background */
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(130deg, #1e003a 0%, #06021e 100%);
+      overflow: hidden;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle at 10% 10%, #ff016e99 0%, transparent 70%),
+                  radial-gradient(circle at 90% 80%, #18e7ff77 0%, transparent 70%),
+                  radial-gradient(circle at 80% 10%, #fffcae44 0%, transparent 75%);
+      animation: bgMove 12s linear infinite alternate;
+      z-index: 0;
+    }
+    @keyframes bgMove {
+      0% { background-position: 0% 0%, 100% 100%, 80% 20%; }
+      100% { background-position: 10% 10%, 85% 76%, 88% 32%; }
+    }
+
+    .chatbot-container {
+      position: relative;
+      z-index: 1;
+      max-width: 420px;
+      margin: 60px auto;
+      box-shadow: 0 0 30px #01011077, 0 0 90px #6f1aff22;
+      border-radius: 30px;
+      background: rgba(17,20,34, 0.95);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: linear-gradient(90deg, #ff00bb 0%, #4ee4ff 100%);
+      font-size: 1.6rem;
+      color: #fff;
+      font-weight: 700;
+      text-shadow: 0 0 7px #fff, 0 0 20px #f2a7ffcd;
+      letter-spacing: 1.2px;
+      padding: 24px 0 16px 32px;
+      border-bottom: 2px solid #10101066;
+      box-shadow: 0 2px 24px #f4029333;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .header-glow {
+      text-shadow: 0 0 6px #ff19c7, 0 0 10px #17ffee;
+      animation: headerPulse 1.6s infinite alternate;
+    }
+    @keyframes headerPulse {
+      0% { text-shadow: 0 0 6px #ff19c7, 0 0 10px #17ffee; }
+      100% { text-shadow: 0 0 20px #ff39ee, 0 0 40px #12e2ee66; }
+    }
+
+    .chat-messages {
+      padding: 36px 16px 16px 16px;
+      height: 360px;
+      background: transparent;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      max-width: 82%;
+      padding: 18px 20px 18px 22px;
+      margin-bottom: 4px;
+      font-size: 1.08rem;
+      border-radius: 16px 22px 22px 10px;
+      box-shadow: 0 0 20px 0 #0a20ff44 inset;
+      letter-spacing: 0.2px;
+      opacity: 0;
+      transform: translateY(40px) scale(0.92);
+      animation: messageIn 0.64s forwards cubic-bezier(.36,1.59,.82,.99);
+      position: relative;
+      word-break: break-word;
+    }
+    .message.user {
+      align-self: flex-end;
+      background: linear-gradient(100deg, #190faa 30%, #531cf9 90%);
+      color: #fff;
+      box-shadow: 0 0 8px #15c6ff44, 0 0 16px #2351cd44;
+      border-radius: 10px 22px 16px 24px;
+      border: 2px solid #20f2ff77;
+      filter: drop-shadow(0 0 12px #1de2ff44);
+    }
+    .message.bot {
+      align-self: flex-start;
+      background: linear-gradient(100deg, #ff29a5 14%, #feaaff 80%);
+      color: #000;
+      box-shadow: 0 0 8px #ff6fe944, 0 0 16px #ea24a744;
+      border: 2px solid #ffcfff55;
+      filter: drop-shadow(0 0 16px #ff30d966);
+    }
+    @keyframes messageIn {
+      0% { opacity: 0; transform: translateY(40px) scale(0.92);}
+      100% { opacity: 1; transform: translateY(0px) scale(1);}
+    }
+
+    .typing-indicator {
+      height: 24px;
+      padding: 8px 18px;
+      margin: 0 0 4px 7px;
+      border-radius: 32px;
+      background: #140964cc;
+      box-shadow: 0 0 18px #00eaff99;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.9;
+      width: fit-content;
+      animation: typingFade .9s cubic-bezier(.73,.16,.60,.98) infinite alternate;
+    }
+    @keyframes typingFade {
+      0% { opacity: .7;}
+      100% { opacity: 1;}
+    }
+    .typing-dot {
+      width: 7px; height: 7px;
+      background: #6de6ff;
+      border-radius: 4px;
+      margin: 0 2px;
+      animation: bounceDot .7s infinite alternate;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.14s;}
+    .typing-dot:nth-child(3) { animation-delay: 0.28s;}
+    @keyframes bounceDot {
+      0% { transform: translateY(0);}
+      100% { transform: translateY(-6px);}
+    }
+
+    .chat-input {
+      display: flex;
+      background: #171b29cc;
+      padding: 18px 16px 18px 14px;
+      border-top: 2px solid #211144;
+      gap: 10px;
+      z-index: 2;
+      box-shadow: 0 0 16px #ff07be20 inset;
+    }
+    .chat-input input {
+      background: #161636;
+      border: none;
+      color: #fff;
+      border-radius: 22px;
+      font-size: 1.08rem;
+      padding: 12px 18px;
+      flex: 1;
+      outline: none;
+      box-shadow: 0 0 6px #3ddbff55;
+      border: 2px solid #23daf944;
+      transition: box-shadow .2s;
+    }
+    .chat-input input:focus {
+      box-shadow: 0 0 16px #6bbfffcc;
+      border-color: #54daffcc;
+    }
+    .send-btn {
+      background: linear-gradient(90deg, #fe24cb 0%, #24e7fc 90%);
+      color: #fff;
+      border: none;
+      border-radius: 18px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 12px 22px;
+      cursor: pointer;
+      filter: drop-shadow(0 0 12px #ff32ec99);
+      text-shadow: 0 0 6px #fff6;
+      transition: transform .1s, box-shadow .2s;
+      box-shadow: 0 0 8px #ff35ec33 inset;
+      letter-spacing: 1px;
+    }
+    .send-btn:hover {
+      transform: scale(1.12);
+      box-shadow: 0 0 20px #ff6bb8cc, 0 0 12px #34e7ff88 inset;
+    }
+    @media (max-width: 600px) {
+      .chatbot-container {
+        margin: 0; width: 100vw; height: 100vh; border-radius: 0;
+      }
+      .chat-messages { height: 54vh; min-height: 260px;}
+      .chat-header { font-size: 1.1rem; padding: 16px 0 10px 18px;}
+      .chat-input { padding: 12px 6px 11px 6px;}
+      .send-btn { font-size: .98rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="chatbot-container">
+    <div class="chat-header">
+      <svg height="28" width="28" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#fff" opacity="0.25"/><path d="M10.7 24c0-1.2.8-2.1 2.2-2.1h5.7c1.3 0 2.1.9 2.1 2.1V24H10.7zm9.4-5.1c1.4 0 2.1-.7 2.1-2.2v-6.8c0-2.5-2-4.5-4.5-4.5h-2c-2.4 0-4.5 2-4.5 4.5v6.8c0 1.5.7 2.2 2.2 2.2h6.7z" fill="#33f2ff" stroke="#fff" stroke-width="1.3"/></svg>
+      <span class="header-glow">Neon VFX Chatbot</span>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <form id="chat-form" class="chat-input" autocomplete="off">
+      <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off" required />
+      <button type="submit" class="send-btn">Send</button>
+    </form>
+  </div>
+  
+  <script>
+    // Dummy bot responses
+    const botReplies = [
+      "✨ Hi! I'm your Neon VFX Chatbot. How can I brighten your day?",
+      "💡 Ask me anything! I love showing off my glow.",
+      "🤖 Did you know? This chat uses cutting-edge CSS VFX.",
+      "🌈 Try typing ‘hello’, ‘help’, or ‘show animation’.",
+      "⚡ Zap! You triggered a new VFX animation. Cool, right?",
+      "🌟 I'm the star of any competition! Thank you for chatting 🎉"
+    ];
+
+    function getBotReply(userMessage) {
+      if(/animation|vfx|effect/i.test(userMessage))
+        return "🎆 Whoa! Animated gradients, glowing text, bounce-in messages—this is Neon VFX at its best!";
+      if(/hello|hi|hey/i.test(userMessage))
+        return "👋 Hello, human! Ready to see some cool effects?";
+      if(/help/i.test(userMessage))
+        return "😊 Need help? Just chat with me and watch the visuals!";
+      // Cycle through preset replies
+      return botReplies[Math.floor(Math.random() * botReplies.length)];
+    }
+
+    const messagesDiv = document.getElementById('chat-messages');
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('chat-input');
+
+    // Add a message, optionally animated
+    function addMessage(text, isUser) {
+      const msg = document.createElement('div');
+      msg.className = 'message ' + (isUser ? 'user' : 'bot');
+      msg.innerText = text;
+      messagesDiv.appendChild(msg);
+      setTimeout(() => {
+        msg.style.opacity = 1;
+      }, 50);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Typing indicator
+    let typingDiv = null;
+    function showTyping() {
+      typingDiv = document.createElement('div');
+      typingDiv.className = 'typing-indicator';
+      for(let i=0; i<3; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'typing-dot';
+        typingDiv.appendChild(dot);
+      }
+      messagesDiv.appendChild(typingDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+    function hideTyping() {
+      if(typingDiv) {
+        typingDiv.remove();
+        typingDiv = null;
+      }
+    }
+
+    // On submit, user sends message
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      addMessage(text, true);
+      input.value = '';
+      // Show typing indicator
+      showTyping();
+      await new Promise(res=>setTimeout(res, 600 + Math.random()*600)); // Simulate "thinking"
+      hideTyping();
+      // Respond
+      addMessage(getBotReply(text), false);
+    });
+
+    // Greet on load
+    window.onload = () => {
+      setTimeout(()=> addMessage('👋 Welcome! Type anything to see VFX magic.', false), 900);
+    };
+  </script>
+</body>
+</html>
